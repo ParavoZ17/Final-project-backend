@@ -23,7 +23,7 @@ export const registerSchema = z.object({
     .string()
     .min(3, { message: "Username must be at least 3 characters long" })
     .max(20, { message: "Username must be at most 20 characters long" })
-    .regex(usernameRegexp, { message: "Username can contain only letters, numbers, and underscores" }),
+    .regex(usernameRegexp, { message: "Username can contain only english letters, numbers, and underscores" }),
 
   fullname: z
     .string()

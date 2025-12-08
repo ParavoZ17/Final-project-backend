@@ -27,7 +27,7 @@ const userSchema = new Schema<UserDocument>({
     type: String,
     match: usernameRegexp,
     required: true,
-    unique: false,
+    unique: true,
   },
   fullname: {
     type: String,
@@ -51,9 +51,7 @@ const userSchema = new Schema<UserDocument>({
 
 userSchema.post("save", handleSaveError);
 
-userSchema.pre("findOneAndUpdate", function (next) {
-  setUpdateSettings.call(this, next);
-});
+userSchema.pre("findOneAndUpdate", setUpdateSettings );
 
 
 userSchema.post("findOneAndUpdate", handleSaveError);

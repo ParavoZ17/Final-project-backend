@@ -19,6 +19,7 @@ export const handleSaveError = (
 };
 
 export const setUpdateSettings = function () {
+  //@ts-expect-error
    this.setOptions({ new: true, runValidators: true });
   // next();
 };

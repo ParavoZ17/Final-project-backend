@@ -1,7 +1,7 @@
 import { AuthRequest } from "../types/interfaces.js";
 import { Request, Response, RequestHandler } from "express";
 
-import { registerUser, loginUser, createTokens } from "../services/auth.services.js";
+import { registerUser, loginUser, createTokens, logoutUser } from "../services/auth.services.js";
 
 import validateBody from "../utils/validateBody.js";
 
@@ -47,3 +47,16 @@ export const getCurrentController = async (req: AuthRequest, res: Response) => {
     }
     ) 
 };
+
+export const logoutController = async (req: AuthRequest, res: Response): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ message: "Not authorized" });
+    return;
+  }
+
+  await logoutUser(req.user._id);
+
+  res.status(204).end();
+};
+
+

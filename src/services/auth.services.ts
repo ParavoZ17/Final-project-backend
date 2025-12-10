@@ -73,3 +73,10 @@ export const loginUser = async(payload: LoginPayload): Promise<LoginResult> => {
         }
     }
 }
+
+export const logoutUser = async (userId: Types.ObjectId): Promise<void> => {
+  await User.findByIdAndUpdate(userId, {
+    accessToken: null,
+    refreshToken: null,
+  });
+};

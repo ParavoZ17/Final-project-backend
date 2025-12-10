@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { Types } from "mongoose";
+import {generateToken} from "../utils/jwt.js"
 
 import User from "../db/models/User.js";
 
@@ -9,13 +10,9 @@ import { RegisterPayload, LoginPayload } from "../schemas/auth.schemas.js";
 
 import { UserDocument } from "../db/models/User.js";
 
-const {JWT_SECRET} = process.env;
 
-if(!JWT_SECRET) {
-    throw new Error("JWT_SECRET not define in environment variables");
-}
 
-type UserFindResult = UserDocument | null;
+export type UserFindResult = UserDocument | null;
 
 export interface LoginResult {
     accessToken: string;
@@ -26,6 +23,18 @@ export interface LoginResult {
         fullname: string;
     }
 }
+
+export const createTokens = (id:Types.ObjectId) => {
+    const accessToken: string = generateToken({id}, {expiresIn: "20m"});
+    const refreshToken: string = generateToken({id}, {expiresIn: "14d"});
+    return {
+        accessToken,
+        refreshToken
+    }
+}
+
+// @ts-expect-error
+export const findUser = query => User.findOne(query);
 
 export const registerUser = async (payload: RegisterPayload): Promise<UserDocument> => {
     const user: UserFindResult = await User.findOne({email: payload.email});
@@ -45,17 +54,12 @@ export const loginUser = async(payload: LoginPayload): Promise<LoginResult> => {
   ]
 });
 
-
     if(!user) throw HttpError(401, "User or Email not found");
 
     const passwordCompare: boolean = await bcrypt.compare(payload.password, user.password);
     if(!passwordCompare) throw HttpError(401, "Password invalid");
-    const tokenPayload = {
-        id: user._id,
-    };
-
-    const accessToken: string = jwt.sign(tokenPayload, JWT_SECRET, {expiresIn: "20m"});
-    const refreshToken: string = jwt.sign(tokenPayload, JWT_SECRET, {expiresIn: "14d"});
+   
+    const {accessToken, refreshToken} = createTokens(user._id)
     await User.findByIdAndUpdate(user._id, {accessToken, refreshToken});
 
     return {

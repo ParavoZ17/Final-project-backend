@@ -1,6 +1,7 @@
+import { AuthRequest } from "../types/interfaces.js";
 import { Request, Response, RequestHandler } from "express";
 
-import { registerUser, loginUser } from "../services/auth.services.js";
+import { registerUser, loginUser, createTokens } from "../services/auth.services.js";
 
 import validateBody from "../utils/validateBody.js";
 
@@ -25,4 +26,24 @@ export const loginController: RequestHandler = async (req, res, next) => {
     } catch (err) {
         next(err); // пробиваємо помилку в errorHandler
     }
+};
+
+
+export const getCurrentController = async (req: AuthRequest, res: Response) => {
+    if (!req.user) {
+    return res.status(401).json({ message: "User not found" });
+}
+    const {accessToken, refreshToken} = createTokens(req.user._id );
+    res.json(
+        {
+        accessToken,
+        refreshToken,
+        user: {
+            username: req.user.username,
+            fullname: req.user.fullname,
+          email: req.user.email,
+        }
+
+    }
+    ) 
 };

@@ -9,7 +9,7 @@ const authRouter = Router();
 authRouter.post("/register", registerController);
 
 authRouter.post("/login", loginController);
-authRouter.post("/logout", authenticate, logoutController)
+authRouter.post("/logout", logoutController)
 authRouter.get("/current", authenticate, getCurrentController);
 
 export default authRouter;

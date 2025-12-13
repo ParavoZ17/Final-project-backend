@@ -1,4 +1,4 @@
-import { Document, CallbackError, Query } from "mongoose";
+import { Document, CallbackError} from "mongoose";
 
 type MongooseErrorWithStatus = CallbackError & { status?: number };
 

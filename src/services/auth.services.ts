@@ -94,9 +94,10 @@ export const refreshTokens = async (refreshToken: string) => {
   const user = await User.findOne({ refreshToken });
   if (!user) throw HttpError(401, "Invalid refresh token");
 
-  const newAccessToken = generateToken({ id: user._id }, { expiresIn: "2m" });
+  const newAccessToken = generateToken({ id: user._id }, { expiresIn: "15m" });
   user.accessToken = newAccessToken;
   await user.save();
 
   return { accessToken: newAccessToken };
 };
+

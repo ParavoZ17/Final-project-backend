@@ -51,10 +51,10 @@ const userSchema = new Schema<UserDocument>(
     password: {
       type: String,
       required: [true, "Password is required"],
-      select: false, // 🔐 password is not returned by default
+      select: false, 
     },
 
-    // ===== PROFILE =====
+
     bio: {
       type: String,
       default: "",
@@ -62,7 +62,7 @@ const userSchema = new Schema<UserDocument>(
     },
 
     avatar: {
-      type: String, // Base64
+      type: String,
       default: "",
     },
 
@@ -72,7 +72,7 @@ const userSchema = new Schema<UserDocument>(
       match: [websiteRegexp, "Website must be a valid URL"],
     },
 
-    // ===== COUNTERS (CACHE) =====
+
     postsCount: {
       type: Number,
       default: 0,
@@ -88,7 +88,6 @@ const userSchema = new Schema<UserDocument>(
       default: 0,
     },
 
-    // ===== AUTH TOKENS =====
     accessToken: {
       type: String,
       default: null,
@@ -104,7 +103,6 @@ const userSchema = new Schema<UserDocument>(
     timestamps: true,
   }
 );
-
 
 userSchema.post("save", handleSaveError);
 userSchema.pre("findOneAndUpdate", setUpdateSettings);

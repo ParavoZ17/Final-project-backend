@@ -1,6 +1,7 @@
 import Comment from "../db/models/Comment.js";
 import Post from "../db/models/Post.js";
 import { Types } from "mongoose";
+import notificationService from "./notification.service.js";
 
 export const addComment = async (
   userId: Types.ObjectId | string,
@@ -17,6 +18,18 @@ export const addComment = async (
   });
 
   await Post.findByIdAndUpdate(postObjectId, { $inc: { commentsCount: 1 } });
+
+  // ✅ Створюємо нотифікацію автору поста
+  const post = await Post.findById(postObjectId);
+  if (post) {
+    await notificationService.createNotification(
+      post.author.toString(),
+      userObjectId.toString(),
+      "comment",
+      post._id.toString()
+    );
+  }
+
   return comment;
 };
 

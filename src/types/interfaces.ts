@@ -9,8 +9,6 @@ export interface AuthRequest extends Request {
   user?: UserDocument;
 }
 
-
-// Для роутів коментарів
 export type CommentRequest<TParams = {}> = AuthRequest & Request<TParams>;
 
 export interface Params {
@@ -23,4 +21,8 @@ export interface PostParams {
 
 export interface CommentParams {
   commentId: string;
+}
+
+export interface UserIdParams {
+  userId: string;
 }

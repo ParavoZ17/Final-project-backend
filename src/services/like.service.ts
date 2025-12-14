@@ -1,6 +1,7 @@
 import Like from "../db/models/Like.js";
 import Post from "../db/models/Post.js";
 import { Types } from "mongoose";
+import notificationService from "./notification.service.js";
 
 export const toggleLike = async (
   userId: Types.ObjectId | string,
@@ -18,6 +19,18 @@ export const toggleLike = async (
   } else {
     await Like.create({ user: userObjectId, post: postObjectId });
     await Post.findByIdAndUpdate(postObjectId, { $inc: { likesCount: 1 } });
+
+    // ✅ Створюємо нотифікацію автору поста
+    const post = await Post.findById(postObjectId);
+    if (post) {
+      await notificationService.createNotification(
+        post.author.toString(),
+        userObjectId.toString(),
+        "like",
+        post._id.toString()
+      );
+    }
+
     return { liked: true };
   }
 };

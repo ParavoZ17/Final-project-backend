@@ -8,3 +8,19 @@ export interface ResponseError extends Error {
 export interface AuthRequest extends Request {
   user?: UserDocument;
 }
+
+
+// Для роутів коментарів
+export type CommentRequest<TParams = {}> = AuthRequest & Request<TParams>;
+
+export interface Params {
+  id: string; 
+}
+
+export interface PostParams {
+  id: string;
+}
+
+export interface CommentParams {
+  commentId: string;
+}

@@ -47,17 +47,18 @@ export const getUserByUsernameController = async (req: Request<Params>, res: Res
   res.json(user);
 };
 
-export const updateAvatar = async (
+export const updateAvatarController = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
-  if (!req.file) {
+  if (!req.file?.path) {
     res.status(400).json({ message: "Avatar file is required" });
     return;
   }
 
-  const avatarURL = `/uploads/avatars/${req.file.filename}`;
-  const avatar = await usersService.updateAvatar(req.user!._id, avatarURL);
+  const avatarUrl = req.file.path;
+
+  const avatar = await usersService.updateAvatar(req.user!._id, avatarUrl);
 
   res.json({ avatar });
 };

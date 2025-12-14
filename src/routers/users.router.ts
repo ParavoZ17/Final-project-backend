@@ -3,7 +3,7 @@ import {
   getCurrentUserController,
   updateCurrentUserController,
   getUserByUsernameController,
-  updateAvatar
+  updateAvatarController
 } from "../controllers/users.controller.js";
 import authenticate from "../middlewares/authenticate.js";
 import { uploadAvatar } from "../middlewares/upload.js";
@@ -16,7 +16,7 @@ userRouter.patch(
   "/avatar",
   authenticate,
   uploadAvatar.single("avatar"),
-  updateAvatar
+  updateAvatarController
 );
 userRouter.get("/:username", getUserByUsernameController);
 

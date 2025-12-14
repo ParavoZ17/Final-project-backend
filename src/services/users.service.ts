@@ -74,10 +74,11 @@ const mapUserDocumentToPublic = (user: UserDocument): PublicUser => ({
   followingCount: user.followingCount ?? 0,
 });
 
+
 export const updateAvatar = async (
   userId: Types.ObjectId,
   avatarURL: string
-) => {
+): Promise<string | null> => {
   const user = await User.findByIdAndUpdate(
     userId,
     { avatar: avatarURL },

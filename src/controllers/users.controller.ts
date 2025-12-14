@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import * as usersService from "../services/users.service.js";
 import { updateUserSchema } from "../schemas/users.schemas.js";
 import { UpdateUserPayload } from "../types/user.interfaces.js";
-import { AuthRequest } from "../types/interfaces.js"; 
+import { AuthRequest } from "../types/interfaces.js";
+
 
 interface Params {
   username: string;
@@ -27,7 +28,6 @@ export const updateCurrentUserController = async (req: AuthRequest, res: Respons
   const updateData: UpdateUserPayload = {
   username: payload.username!, 
   bio: payload.bio ?? "",
-  avatar: payload.avatar ?? "",
   website: payload.website ?? "",
 };
 
@@ -45,4 +45,19 @@ export const getUserByUsernameController = async (req: Request<Params>, res: Res
 
   const user = await usersService.getUserByUsername(username);
   res.json(user);
+};
+
+export const updateAvatar = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  if (!req.file) {
+    res.status(400).json({ message: "Avatar file is required" });
+    return;
+  }
+
+  const avatarURL = `/uploads/avatars/${req.file.filename}`;
+  const avatar = await usersService.updateAvatar(req.user!._id, avatarURL);
+
+  res.json({ avatar });
 };

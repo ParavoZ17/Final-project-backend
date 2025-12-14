@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 import User, { UserDocument } from "../db/models/User.js";
 import HttpError from "../utils/HttpError.js";
 import { UpdateUserPayload, PublicUser } from "../types/user.interfaces.js";
@@ -48,6 +50,7 @@ export const getUserByUsername = async (username: string): Promise<PublicUser> =
   if (!user) throw HttpError(404, "User not found");
 
   return {
+    id: user._id.toString(),
     username: user.username,
     fullname: user.fullname,
     bio: user.bio || "",
@@ -60,6 +63,7 @@ export const getUserByUsername = async (username: string): Promise<PublicUser> =
 };
 
 const mapUserDocumentToPublic = (user: UserDocument): PublicUser => ({
+  id: user._id.toString(),
   username: user.username,
   fullname: user.fullname,
   bio: user.bio ?? "",
@@ -69,3 +73,16 @@ const mapUserDocumentToPublic = (user: UserDocument): PublicUser => ({
   followersCount: user.followersCount ?? 0,
   followingCount: user.followingCount ?? 0,
 });
+
+export const updateAvatar = async (
+  userId: Types.ObjectId,
+  avatarURL: string
+) => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { avatar: avatarURL },
+    { new: true }
+  );
+
+  return user?.avatar || null;
+};

@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 
 export interface PublicUser {
+  id: string; 
   username: string;
   fullname: string;
   bio: string;

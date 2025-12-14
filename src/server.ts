@@ -1,5 +1,6 @@
 import express, {Application} from "express";
 import cors from "cors";
+import path from "path";
 
 import notFoundHandler from "./middlewares/notFoundHandler.js";
 import errorHandler from "./middlewares/errorHandler.js";
@@ -11,6 +12,8 @@ const startServer = (): void => {
 
     app.use(cors());
     app.use(express.json());
+
+    app.use("/uploads",express.static(path.resolve("uploads")));
 
     app.use("/api/auth",authRouter);
     app.use("/api/user",userRouter);

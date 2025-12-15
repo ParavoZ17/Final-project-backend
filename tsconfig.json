@@ -6,7 +6,7 @@
     "tsBuildInfoFile": "./.tsbuildinfo",
     "removeComments": true,
     "strict": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
 
     "module": "nodenext",
     "target": "esnext",

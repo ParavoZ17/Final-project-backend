@@ -9,6 +9,7 @@ export interface NotificationDocument extends Document {
   post?: Types.ObjectId;
   read: boolean;
   createdAt: Date;
+  updatedAt: Date; 
 }
 
 const notificationSchema = new Schema<NotificationDocument>(

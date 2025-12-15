@@ -46,6 +46,7 @@ export const getCurrentController = async (req: AuthRequest, res: Response) => {
     accessToken,
     refreshToken,
     user: {
+      id: req.user._id,
       username: req.user.username,
       fullname: req.user.fullname,
       email: req.user.email,

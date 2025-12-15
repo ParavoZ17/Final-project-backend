@@ -14,7 +14,7 @@ const avatarStorage = new CloudinaryStorage({
   cloudinary,
   params: async (_req, _file) => ({
     folder: "avatars",
-    format: "png", // або "jpg", "jpeg"
+    format: "png", 
     transformation: [{ width: 500, height: 500, crop: "limit" }],
   }),
 });
@@ -26,7 +26,7 @@ const postStorage = new CloudinaryStorage({
   cloudinary,
   params: async (_req, _file) => ({
     folder: "posts",
-    format: "jpg", // можна дозволити jpg, png
+    format: "jpg", 
     transformation: [{ width: 1080, height: 1080, crop: "limit" }],
   }),
 });

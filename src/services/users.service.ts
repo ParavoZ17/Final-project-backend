@@ -1,89 +1,86 @@
   import { Types } from "mongoose";
+import User from "../db/models/User.js";
+import Post from "../db/models/Post.js";
+import HttpError from "../utils/HttpError.js";
+import { UpdateUserPayload, PublicUser } from "../types/user.interfaces.js";
 
-  import User, { UserDocument } from "../db/models/User.js";
-  import HttpError from "../utils/HttpError.js";
-  import { UpdateUserPayload, PublicUser } from "../types/user.interfaces.js";
 
-  export const getUserById = async (userId: string): Promise<PublicUser> => {
-    const user = await User.findById(userId).select(
-      "-password -accessToken -refreshToken"
-    );
+export const getUserById = async (userId: string): Promise<PublicUser> => {
+  return getUserWithPosts({ _id: userId });
+};
 
-    if (!user) throw HttpError(404, "User not found");
 
-    return mapUserDocumentToPublic(user);
-  };
+export const getUserByUsername = async (
+  username: string
+): Promise<PublicUser> => {
+  return getUserWithPosts({ username: username.toLowerCase() });
+};
 
-  export const updateUser = async (
-    userId: string,
-    payload: UpdateUserPayload
-  ): Promise<PublicUser> => {
-    const updateData: Partial<UpdateUserPayload> = {};
+export const updateUser = async (
+  userId: string,
+  payload: UpdateUserPayload
+): Promise<PublicUser> => {
+  const updateData: Partial<UpdateUserPayload> = {};
 
-    if (payload.username) {
-      const usernameLC = payload.username.toLowerCase();
-      const exists = await User.findOne({ username: usernameLC, _id: { $ne: userId } });
-      if (exists) throw HttpError(409, "Username already exists");
-      updateData.username = usernameLC;
+  if (payload.username) {
+    const usernameLC = payload.username.toLowerCase();
+
+    const exists = await User.findOne({
+      username: usernameLC,
+      _id: { $ne: userId },
+    });
+
+    if (exists) {
+      throw HttpError(409, "Username already exists");
     }
 
+    updateData.username = usernameLC;
+  }
 
-    updateData.bio = payload.bio ?? "";
-    updateData.avatar = payload.avatar ?? "";
-    updateData.website = payload.website ?? "";
+  updateData.bio = payload.bio ?? "";
+  updateData.avatar = payload.avatar ?? "";
+  updateData.website = payload.website ?? "";
 
-    const user = await User.findByIdAndUpdate(userId, updateData, { new: true }).select(
-      "-password -accessToken -refreshToken"
-    );
+  await User.findByIdAndUpdate(userId, updateData, { new: true });
 
-    if (!user) throw HttpError(404, "User not found");
+  return getUserWithPosts({ _id: userId });
+};
 
-    return mapUserDocumentToPublic(user);
-  };
-  export const getUserByUsername = async (username: string): Promise<PublicUser> => {
-    const usernameLC = username.toLowerCase();
+export const updateAvatar = async (
+  userId: Types.ObjectId,
+  avatarURL: string
+): Promise<string | null> => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { avatar: avatarURL },
+    { new: true }
+  );
 
-    const user = await User.findOne({ username: usernameLC }).select(
-      "-password -accessToken -refreshToken -email"
-    );
+  return user?.avatar || null;
+};
 
-    if (!user) throw HttpError(404, "User not found");
+ const getUserWithPosts = async (userQuery: object) => {
+  const user = await User.findOne(userQuery).select(
+    "-password -accessToken -refreshToken -email"
+  );
 
-    return {
-      id: user._id.toString(),
-      username: user.username,
-      fullname: user.fullname,
-      bio: user.bio || "",
-      avatar: user.avatar || "",
-      website: user.website || "",
-      postsCount: user.postsCount || 0,
-      followersCount: user.followersCount || 0,
-      followingCount: user.followingCount || 0,
-    };
-  };
+  if (!user) throw HttpError(404, "User not found");
 
-  const mapUserDocumentToPublic = (user: UserDocument): PublicUser => ({
+  const posts = await Post.find({ author: user._id })
+    .sort({ createdAt: -1 })
+    .select("_id content images likesCount commentsCount createdAt");
+
+  return {
     id: user._id.toString(),
     username: user.username,
     fullname: user.fullname,
     bio: user.bio ?? "",
     avatar: user.avatar ?? "",
     website: user.website ?? "",
-    postsCount: user.postsCount ?? 0,
+    postsCount: user.postsCount ?? posts.length,
     followersCount: user.followersCount ?? 0,
     followingCount: user.followingCount ?? 0,
-  });
-
-
-  export const updateAvatar = async (
-    userId: Types.ObjectId,
-    avatarURL: string
-  ): Promise<string | null> => {
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { avatar: avatarURL },
-      { new: true }
-    );
-
-    return user?.avatar || null;
+    posts,
   };
+};
+

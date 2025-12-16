@@ -26,6 +26,7 @@ export const updateCurrentUserController = async (req: AuthRequest, res: Respons
     return res.status(400).json({ message: "Username is required" });
   }
   const updateData: UpdateUserPayload = {
+  avatar: payload.avatar!,
   username: payload.username!, 
   bio: payload.bio ?? "",
   website: payload.website ?? "",

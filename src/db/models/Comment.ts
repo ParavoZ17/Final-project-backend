@@ -10,7 +10,7 @@ export interface CommentDocument extends Document {
 
 const commentSchema = new Schema<CommentDocument>(
   {
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    user: { type: Schema.Types.ObjectId, ref: "user", required: true },
     post: { type: Schema.Types.ObjectId, ref: "Post", required: true },
     content: { type: String, required: true, maxlength: 1000 },
   },

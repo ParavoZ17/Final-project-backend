@@ -1,8 +1,9 @@
 import Post from "../db/models/Post.js";
+import User from "../db/models/User.js";
 import Like from "../db/models/Like.js";
 import { Types } from "mongoose";
 
-
+// Отримати пости (для стрічки, окрім власних)
 export const getPosts = async (userId: string, limit = 20, skip = 0) => {
   const posts = await Post.find({ author: { $ne: new Types.ObjectId(userId) } })
     .sort({ createdAt: -1 })
@@ -20,15 +21,24 @@ export const getPosts = async (userId: string, limit = 20, skip = 0) => {
   }));
 };
 
+// Створення посту + оновлення користувача
 export const createPost = async (userId: string, content: string, images: string[]) => {
   const post = await Post.create({
     author: userId,
     content,
     images,
   });
+
+  // оновлюємо користувача
+  await User.findByIdAndUpdate(userId, {
+    $push: { posts: post._id },
+    $inc: { postsCount: 1 },
+  });
+
   return post.toJSON();
 };
 
+// Отримати пост за id
 export const getPostById = async (postId: string, currentUserId: string) => {
   const post = await Post.findById(postId).populate("author", "username avatar fullname");
   if (!post) return null;
@@ -41,6 +51,7 @@ export const getPostById = async (postId: string, currentUserId: string) => {
   };
 };
 
+// Оновлення посту
 export const updatePost = async (postId: string, content?: string, newImages?: string[]) => {
   const post = await Post.findByIdAndUpdate(
     postId,
@@ -50,7 +61,16 @@ export const updatePost = async (postId: string, content?: string, newImages?: s
   return post?.toJSON() || null;
 };
 
+// Видалення посту + оновлення користувача
 export const deletePost = async (postId: string) => {
   const post = await Post.findByIdAndDelete(postId);
-  return !!post;
+  if (!post) return false;
+
+  // Оновлюємо користувача
+  await User.findByIdAndUpdate(post.author, {
+    $pull: { posts: post._id },
+    $inc: { postsCount: -1 },
+  });
+
+  return true;
 };

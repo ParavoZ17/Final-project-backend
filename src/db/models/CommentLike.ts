@@ -7,7 +7,7 @@ export interface CommentLikeDocument extends Document {
 
 const commentLikeSchema = new Schema<CommentLikeDocument>(
   {
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    user: { type: Schema.Types.ObjectId, ref: "user", required: true },
     comment: { type: Schema.Types.ObjectId, ref: "Comment", required: true },
   },
   {

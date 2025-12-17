@@ -15,8 +15,8 @@ export interface NotificationDocument extends Document {
 
 const notificationSchema = new Schema<NotificationDocument>(
   {
-    recipient: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    sender: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    recipient: { type: Schema.Types.ObjectId, ref: "user", required: true, index: true },
+    sender: { type: Schema.Types.ObjectId, ref: "user", required: true },
     type: { type: String, enum: ["follow", "like", "comment"], required: true },
     post: { type: Schema.Types.ObjectId, ref: "Post" },
     comment: { type: Schema.Types.ObjectId, ref: "Comment" },

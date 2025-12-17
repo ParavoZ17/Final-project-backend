@@ -45,6 +45,7 @@ export const getUserByUsernameController = async (req: Request<Params>, res: Res
   }
 
   const user = await usersService.getUserByUsername(username);
+  
   res.json(user);
 };
 

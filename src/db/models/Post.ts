@@ -12,7 +12,7 @@ export interface PostDocument extends Document {
 
 const postSchema = new Schema<PostDocument>(
   {
-    author: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    author: { type: Schema.Types.ObjectId, ref: "user", required: true, index: true },
     content: { type: String, required: true, maxlength: 5000 },
     images: { type: [String], default: [] },
     likesCount: { type: Number, default: 0 },

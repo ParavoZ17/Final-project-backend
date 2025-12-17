@@ -9,6 +9,7 @@ import errorHandler from "./middlewares/errorHandler.js";
 import authRouter from "./routers/auth.router.js";
 import userRouter from "./routers/users.router.js";
 import postsRouter from "./routers/posts.router.js";
+import notificationRouter from "./routers/notification.routes.js"
 
 const startServer = (): void => {
   const app: Application = express();
@@ -21,6 +22,7 @@ const startServer = (): void => {
   app.use("/api/auth", authRouter);
   app.use("/api/user", userRouter);
   app.use("/api/posts", postsRouter);
+  app.use("/api/notifications", notificationRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

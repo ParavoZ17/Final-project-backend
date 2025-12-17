@@ -197,7 +197,7 @@ const getUserWithPosts = async (
 
   const posts: PostForFrontend[] = postsRaw.map(post =>
     mapPostForFrontend(post as unknown as PostWithAuthor, {
-      userLiked: false, // тут можна додати перевірку лайку, якщо потрібно
+      userLiked: false, 
       isAuthorFollowed: isFollowed,
     })
   );

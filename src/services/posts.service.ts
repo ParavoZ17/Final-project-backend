@@ -1,98 +1,89 @@
+
+import { Types } from "mongoose";
 import Post from "../db/models/Post.js";
 import User from "../db/models/User.js";
 import Like from "../db/models/Like.js";
-import { Types } from "mongoose";
-import { mapPost } from "../utils/mappers/post.mapper.js";
 import Follow from "../db/models/Follow.js";
+import { mapPostForFrontend } from "../utils/mappers/post.mapper.js";
+import { PostWithAuthor, PostForFrontend } from "../types/post.types.js";
 
 export const getPosts = async (
   userId: string,
   limit = 20,
   skip = 0
-) => {
-  const posts = await Post.find({
-    author: { $ne: new Types.ObjectId(userId) },
-  })
+): Promise<PostForFrontend[]> => {
+  const posts = await Post.find({ author: { $ne: new Types.ObjectId(userId) } })
     .sort({ createdAt: -1 })
     .limit(limit)
     .skip(skip)
-    .populate("author", "username fullname avatar");
+    .populate<{ author: PostWithAuthor["author"] }>(
+      "author",
+      "username fullname avatar"
+    );
 
   const postIds = posts.map(p => p._id);
-  const authorIds = posts.map(p => p.author._id.toString());
+  const authorIds = posts.map(p => p.author?._id.toString()).filter(Boolean);
 
-  // лайки
-  const likes = await Like.find({
-    user: userId,
-    post: { $in: postIds },
-  });
+  const likes = await Like.find({ user: userId, post: { $in: postIds } });
+  const likedPostIds = new Set(likes.map(l => l.post?.toString()));
 
-  const likedPostIds = new Set(
-    likes.map(l => l.post?.toString())
-  );
-
-  // фолови
-  const follows = await Follow.find({
-    follower: userId,
-    following: { $in: authorIds },
-  });
-
-  const followedAuthorIds = new Set(
-    follows.map(f => f.following.toString())
-  );
+  const follows = await Follow.find({ follower: userId, following: { $in: authorIds } });
+  const followedAuthorIds = new Set(follows.map(f => f.following.toString()));
 
   return posts.map(post =>
-    mapPost(post, {
+    mapPostForFrontend(post as unknown as PostWithAuthor, {
       userLiked: likedPostIds.has(post._id.toString()),
-      isAuthorFollowed: followedAuthorIds.has(
-        post.author._id.toString()
-      ),
+      isAuthorFollowed: post.author ? followedAuthorIds.has(post.author._id.toString()) : false,
     })
   );
 };
 
-export const createPost = async (userId: string, content: string, images: string[]) => {
+export const createPost = async (
+  userId: string,
+  content: string,
+  images: string[]
+): Promise<PostForFrontend> => {
   const post = await Post.create({
     author: userId,
     content,
     images,
   });
 
- 
   await User.findByIdAndUpdate(userId, {
     $push: { posts: post._id },
     $inc: { postsCount: 1 },
   });
 
-  return post.toJSON();
+  // populate author
+  await post.populate<{ author: PostWithAuthor["author"] }>("author", "username fullname avatar");
+
+  return mapPostForFrontend(post as unknown as PostWithAuthor, {
+    userLiked: false,
+    isAuthorFollowed: false,
+  });
 };
 
 export const getPostById = async (
   postId: string,
   currentUserId: string
-) => {
-  const post = await Post.findById(postId).populate(
+): Promise<PostForFrontend | null> => {
+  const post = await Post.findById(postId).populate<{ author: PostWithAuthor["author"] }>(
     "author",
     "username fullname avatar"
   );
 
   if (!post) return null;
 
-  const [liked, followed] = await Promise.all([
-    Like.exists({ user: currentUserId, post: post._id }),
-    Follow.exists({
-      follower: currentUserId,
-      following: post.author._id,
-    }),
-  ]);
+  const liked = await Like.exists({ user: currentUserId, post: post._id });
+  const followed = post.author
+    ? await Follow.exists({ follower: currentUserId, following: post.author._id })
+    : false;
 
-  return mapPost(post, {
+  return mapPostForFrontend(post as unknown as PostWithAuthor, {
     userLiked: !!liked,
     isAuthorFollowed: !!followed,
   });
 };
-
-
 
 export const updatePost = async (postId: string, content?: string, newImages?: string[]) => {
   const post = await Post.findByIdAndUpdate(

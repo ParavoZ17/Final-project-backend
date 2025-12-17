@@ -64,3 +64,4 @@ export const deletePostController = async (req: AuthRequest & Request<Params>, r
     res.status(500).json({ message: "Server error", error: (err as Error).message });
   }
 };
+

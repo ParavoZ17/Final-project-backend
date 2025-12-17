@@ -64,3 +64,17 @@ export const updateAvatarController = async (
 
   res.json({ avatar });
 };
+
+export const searchUsersController = async (
+  req: Request,
+  res: Response
+) => {
+  const query = String(req.query.query || "").trim();
+
+  if (!query) {
+    return res.json([]);
+  }
+
+  const users = await usersService.searchUsers(query);
+  res.json(users);
+};

@@ -2,7 +2,7 @@ import { Router } from "express";
 import authenticate from "../middlewares/authenticate.js";
 import * as followController from "../controllers/follow.controller.js";
 
-const followRouter = Router();
+const followRouter = Router({mergeParams: true});
 
 followRouter.use(authenticate);
 followRouter.post("/follow", followController.followUser);

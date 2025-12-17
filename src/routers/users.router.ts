@@ -3,6 +3,7 @@ import {
   getCurrentUserController,
   updateCurrentUserController,
   getUserByUsernameController,
+  searchUsersController,
   updateAvatarController,
 } from "../controllers/users.controller.js";
 import authenticate from "../middlewares/authenticate.js";
@@ -21,6 +22,7 @@ userRouter.patch(
   updateAvatarController
 );
 
+userRouter.get("/search", searchUsersController);
 userRouter.get("/:username", getUserByUsernameController);
 
 

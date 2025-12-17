@@ -1,7 +1,9 @@
 import { Types } from "mongoose";
 
+import { PostForFrontend } from "./post.types.js";
+
 export interface PublicUser {
-  id: string; 
+  id: string;
   username: string;
   fullname: string;
   bio: string;
@@ -10,8 +12,8 @@ export interface PublicUser {
   postsCount: number;
   followersCount: number;
   followingCount: number;
+  posts?: PostForFrontend[];
 }
-
 export interface UpdateUserPayload {
   username: string;
   bio?: string | undefined;

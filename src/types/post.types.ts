@@ -14,5 +14,22 @@ export interface PostWithAuthor {
   likesCount?: number;
   commentsCount?: number;
   createdAt: Date;
-  author?: PostAuthor;
+  author: PostAuthor; 
+}
+
+export interface PostForFrontend {
+  id: string;
+  content: string;
+  images?: string[];
+  likesCount?: number;
+  commentsCount?: number;
+  createdAt: Date;
+  author: {
+    id: string;
+    username: string;
+    fullname: string;
+    avatar?: string;
+    isFollowedByCurrentUser: boolean;
+  } | null;
+  userLiked?: boolean;
 }

@@ -3,6 +3,7 @@ import User from "../db/models/User.js";
 import Post from "../db/models/Post.js";
 import HttpError from "../utils/HttpError.js";
 import { UpdateUserPayload, PublicUser } from "../types/user.interfaces.js";
+import { mapPost } from "../utils/mappers/post.mapper.js";
 
 
 export const getUserById = async (userId: string): Promise<PublicUser> => {
@@ -68,7 +69,7 @@ export const updateAvatar = async (
 
   const posts = await Post.find({ author: user._id })
     .sort({ createdAt: -1 })
-    .select("_id content images likesCount commentsCount createdAt");
+    .populate("author", "username avatar fullname");
 
   return {
     id: user._id.toString(),
@@ -80,7 +81,9 @@ export const updateAvatar = async (
     postsCount: user.postsCount ?? posts.length,
     followersCount: user.followersCount ?? 0,
     followingCount: user.followingCount ?? 0,
-    posts,
+
+    posts: posts.map(post => mapPost(post)),
   };
 };
+
 

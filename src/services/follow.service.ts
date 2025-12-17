@@ -18,7 +18,6 @@ class FollowService {
       await User.findByIdAndUpdate(followerId, { $inc: { followingCount: 1 } });
       await User.findByIdAndUpdate(followingId, { $inc: { followersCount: 1 } });
 
-      // ✅ Створюємо нотифікацію для користувача, на якого підписалися
       await notificationService.createNotification(followingId, followerId, "follow");
 
       return follow;
@@ -42,16 +41,51 @@ class FollowService {
     return deleted;
   }
 
-  async getFollowing(userId: string): Promise<FollowDocument[]> {
-    return Follow.find({ follower: userId })
+  async getFollowing(userId: string, currentUserId?: string) {
+    const following = await Follow.find({ follower: userId })
       .populate("following", "username fullname avatar")
       .lean();
+
+    if (!currentUserId) return following;
+
+    // додаємо info, чи currentUser також підписаний на цих користувачів
+    const followingIds = following.map(f => f.following._id.toString());
+    const userFollowing = await Follow.find({
+      follower: currentUserId,
+      following: { $in: followingIds },
+    });
+    const userFollowingIds = userFollowing.map(f => f.following.toString());
+
+    return following.map(f => ({
+      ...f,
+      following: {
+        ...f.following,
+        isFollowedByCurrentUser: userFollowingIds.includes(f.following._id.toString()),
+      },
+    }));
   }
 
-  async getFollowers(userId: string): Promise<FollowDocument[]> {
-    return Follow.find({ following: userId })
+  async getFollowers(userId: string, currentUserId?: string) {
+    const followers = await Follow.find({ following: userId })
       .populate("follower", "username fullname avatar")
       .lean();
+
+    if (!currentUserId) return followers;
+
+    const followerIds = followers.map(f => f.follower._id.toString());
+    const userFollowing = await Follow.find({
+      follower: currentUserId,
+      following: { $in: followerIds },
+    });
+    const userFollowingIds = userFollowing.map(f => f.following.toString());
+
+    return followers.map(f => ({
+      ...f,
+      follower: {
+        ...f.follower,
+        isFollowedByCurrentUser: userFollowingIds.includes(f.follower._id.toString()),
+      },
+    }));
   }
 
   async isFollowing(followerId: string, followingId: string): Promise<boolean> {

@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
 import Notification, { NotificationDocument, NotificationType } from "../db/models/Notification.js";
+import { getIO } from "../utils/socket.js";
 
 type PopulatedUser = {
   _id: Types.ObjectId;
@@ -14,8 +15,8 @@ type PopulatedPost = {
 };
 
 export type NotificationWithTimeAgo = {
-  _id: Types.ObjectId;
-  recipient: Types.ObjectId;
+  id: string;
+  recipient: string;
   sender: PopulatedUser;
   type: NotificationType;
   post?: PopulatedPost;
@@ -44,17 +45,27 @@ class NotificationService {
       sender: new Types.ObjectId(senderId),
       type,
     };
-
     if (postId) data.post = new Types.ObjectId(postId);
 
-    return Notification.create(data);
+    const notification = await Notification.create(data);
+
+    // emit via Socket.IO
+    const io = getIO();
+    io.to(recipientId).emit("new_notification", {
+      id: notification._id.toString(),
+      recipient: recipientId,
+      sender: { _id: senderId },
+      type,
+      post: postId ? { _id: postId } : undefined,
+      read: false,
+      createdAt: notification.createdAt,
+      updatedAt: notification.updatedAt,
+    });
+
+    return notification;
   }
 
-  async getNotifications(
-    recipientId: string,
-    limit = 20,
-    skip = 0
-  ): Promise<NotificationWithTimeAgo[]> {
+  async getNotifications(recipientId: string, limit = 20, skip = 0): Promise<NotificationWithTimeAgo[]> {
     const notifications = await Notification.find({ recipient: recipientId })
       .sort({ createdAt: -1 })
       .limit(limit)
@@ -62,20 +73,21 @@ class NotificationService {
       .populate("sender", "username fullname avatar")
       .populate("post", "content");
 
-   return notifications.map(n => ({
-  _id: n._id,
-  recipient: n.recipient,
-  sender: n.sender as unknown as PopulatedUser, 
-  type: n.type,
-  post: n.post ? (n.post as unknown as PopulatedPost) : undefined,
-  read: n.read,
-  createdAt: n.createdAt,
-  updatedAt: n.updatedAt,
-  timeAgo: this.formatTimeAgo(n.createdAt),
-}));
+    return notifications.map((n) => ({
+      id: n._id.toString(),
+      recipient: n.recipient.toString(),
+      sender: n.sender as unknown as PopulatedUser,
+      type: n.type,
+      post: n.post ? (n.post as unknown as PopulatedPost) : undefined,
+      read: n.read,
+      createdAt: n.createdAt,
+      updatedAt: n.updatedAt,
+      timeAgo: this.formatTimeAgo(n.createdAt),
+    }));
   }
 
   async markAsRead(notificationId: string) {
+    if (!notificationId) throw new Error("Notification ID required");
     return Notification.findByIdAndUpdate(notificationId, { read: true }, { new: true });
   }
 

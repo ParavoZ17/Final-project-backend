@@ -1,14 +1,14 @@
 import { Schema, model, Document, Types } from "mongoose";
 
-export interface LikeDocument extends Document {
+export interface CommentLikeDocument extends Document {
   user: Types.ObjectId;
-  post: Types.ObjectId;
+  comment: Types.ObjectId;
 }
 
-const likeSchema = new Schema<LikeDocument>(
+const commentLikeSchema = new Schema<CommentLikeDocument>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    post: { type: Schema.Types.ObjectId, ref: "Post", required: true },
+    comment: { type: Schema.Types.ObjectId, ref: "Comment", required: true },
   },
   {
     timestamps: true,
@@ -23,4 +23,4 @@ const likeSchema = new Schema<LikeDocument>(
   }
 );
 
-export default model<LikeDocument>("Like", likeSchema);
+export default model<CommentLikeDocument>("CommentLike", commentLikeSchema);

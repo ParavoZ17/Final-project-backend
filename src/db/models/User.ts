@@ -16,7 +16,7 @@ export interface UserDocument extends Document {
 
   bio?: string;
   avatar?: string;
-  website?:string;
+  website?: string;
 
   postsCount: number;
   followersCount: number;
@@ -51,9 +51,8 @@ const userSchema = new Schema<UserDocument>(
     password: {
       type: String,
       required: [true, "Password is required"],
-      select: false, 
+      select: false,
     },
-
 
     bio: {
       type: String,
@@ -71,7 +70,6 @@ const userSchema = new Schema<UserDocument>(
       default: "",
       match: [websiteRegexp, "Website must be a valid URL"],
     },
-
 
     postsCount: {
       type: Number,
@@ -101,6 +99,14 @@ const userSchema = new Schema<UserDocument>(
   {
     versionKey: false,
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform: (_doc, ret: Record<string, unknown>) => {
+        if (ret._id) ret.id = ret._id.toString();
+        delete ret._id;
+        delete ret.password;
+      },
+    },
   }
 );
 

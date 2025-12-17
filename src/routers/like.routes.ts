@@ -1,8 +1,8 @@
-import { Router, Request, Response } from "express";
+import { Router, Response } from "express";
 import authenticate from "../middlewares/authenticate.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { toggleLikeController, getLikesController } from "../controllers/like.controller.js";
-import type { AuthRequest, PostParams } from "../types/interfaces.js";
+import type { AuthRequest } from "../types/interfaces.js";
 
 const likeRouter = Router({ mergeParams: true });
 
@@ -10,18 +10,14 @@ const likeRouter = Router({ mergeParams: true });
 likeRouter.post(
   "/",
   authenticate,
-  asyncHandler((req: AuthRequest & Request<PostParams>, res: Response) =>
-    toggleLikeController(req, res)
-  )
+  asyncHandler((req, res: Response) => toggleLikeController(req as AuthRequest, res))
 );
 
 // GET /posts/:id/like
 likeRouter.get(
   "/",
   authenticate,
-  asyncHandler((req: Request<PostParams>, res: Response) =>
-    getLikesController(req, res)
-  )
+  asyncHandler((req, res: Response) => getLikesController(req as AuthRequest, res))
 );
 
 export default likeRouter;

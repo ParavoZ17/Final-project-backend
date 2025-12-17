@@ -5,15 +5,14 @@ import {
   addCommentController,
   getCommentsController,
   deleteCommentController,
+  toggleCommentLikeController
 } from "../controllers/comment.controller.js";
 
-const commentsRouter = Router({ mergeParams: true });
+const router = Router({ mergeParams: true });
 
+router.post("/", authenticate, asyncHandler(addCommentController));
+router.get("/", authenticate, asyncHandler(getCommentsController));
+router.delete("/:commentId", authenticate, asyncHandler(deleteCommentController));
+router.post("/:commentId/like", authenticate, asyncHandler(toggleCommentLikeController));
 
-commentsRouter.post("/", authenticate, asyncHandler(addCommentController));
-
-commentsRouter.get("/", authenticate, asyncHandler(getCommentsController));
-
-commentsRouter.delete("/:commentId", authenticate, asyncHandler(deleteCommentController));
-
-export default commentsRouter;
+export default router;

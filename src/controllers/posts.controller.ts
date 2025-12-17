@@ -2,13 +2,12 @@ import { Request, Response } from "express";
 import * as postService from "../services/posts.service.js";
 import { AuthRequest, Params } from "../types/interfaces.js";
 
-// створення поста
 export const createPostController = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!._id;
+    const userId = req.user!._id.toString();
     const { content } = req.body;
     const files = req.files as Express.Multer.File[] | undefined;
-    const images = files?.map((f) => f.path) || [];
+    const images = files?.map(f => f.path) || [];
 
     if (!content && images.length === 0) {
       return res.status(400).json({ message: "Post content or images required" });
@@ -21,10 +20,9 @@ export const createPostController = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// отримати всі пости з авторами та коментарями
 export const getPostsController = async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user!._id;
+    const userId = req.user!._id.toString();
     const posts = await postService.getPosts(userId, 20, 0);
     res.json(posts);
   } catch (err: unknown) {
@@ -32,13 +30,9 @@ export const getPostsController = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// отримати пост по id
-export const getPostByIdController = async (
-  req: AuthRequest & Request<Params>,
-  res: Response
-) => {
+export const getPostByIdController = async (req: AuthRequest & Request<Params>, res: Response) => {
   try {
-    const userId = req.user!._id;
+    const userId = req.user!._id.toString();
     const post = await postService.getPostById(req.params.id, userId);
     if (!post) return res.status(404).json({ message: "Post not found" });
     res.json(post);
@@ -47,15 +41,11 @@ export const getPostByIdController = async (
   }
 };
 
-// оновлення поста
-export const updatePostController = async (
-  req: AuthRequest & Request<Params>,
-  res: Response
-) => {
+export const updatePostController = async (req: AuthRequest & Request<Params>, res: Response) => {
   try {
     const { content } = req.body;
     const files = req.files as Express.Multer.File[] | undefined;
-    const newImages = files?.map((f) => f.path) || [];
+    const newImages = files?.map(f => f.path) || [];
 
     const post = await postService.updatePost(req.params.id, content, newImages);
     if (!post) return res.status(404).json({ message: "Post not found" });
@@ -65,11 +55,7 @@ export const updatePostController = async (
   }
 };
 
-// видалення поста
-export const deletePostController = async (
-  req: AuthRequest & Request<Params>,
-  res: Response
-) => {
+export const deletePostController = async (req: AuthRequest & Request<Params>, res: Response) => {
   try {
     const deleted = await postService.deletePost(req.params.id);
     if (!deleted) return res.status(404).json({ message: "Post not found" });
@@ -78,4 +64,3 @@ export const deletePostController = async (
     res.status(500).json({ message: "Server error", error: (err as Error).message });
   }
 };
-              

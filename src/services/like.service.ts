@@ -1,63 +1,36 @@
+import { Types } from "mongoose";
 import Like from "../db/models/Like.js";
 import Post from "../db/models/Post.js";
-import { Types } from "mongoose";
 import notificationService from "./notification.service.js";
 
-export const toggleLike = async (
-  userId: Types.ObjectId | string,
-  postId: string
-) => {
-  const userObjectId =
-    typeof userId === "string" ? new Types.ObjectId(userId) : userId;
+export const toggleLike = async (userId: string, postId: string) => {
+  const userObjectId = new Types.ObjectId(userId);
   const postObjectId = new Types.ObjectId(postId);
 
-  const existing = await Like.findOne({
-    user: userObjectId,
-    post: postObjectId,
-  });
+  const existing = await Like.findOne({ user: userObjectId, post: postObjectId });
 
   if (existing) {
     await existing.deleteOne();
-
-    const post = await Post.findByIdAndUpdate(
-      postObjectId,
-      { $inc: { likesCount: -1 } },
-      { new: true }
-    );
-
-    return {
-      liked: false,
-      likesCount: post?.likesCount ?? 0,
-    };
+    const post = await Post.findByIdAndUpdate(postObjectId, { $inc: { likesCount: -1 } }, { new: true });
+    return { liked: false, likesCount: post?.likesCount ?? 0 };
   }
 
   await Like.create({ user: userObjectId, post: postObjectId });
-
-  const post = await Post.findByIdAndUpdate(
-    postObjectId,
-    { $inc: { likesCount: 1 } },
-    { new: true }
-  );
+  const post = await Post.findByIdAndUpdate(postObjectId, { $inc: { likesCount: 1 } }, { new: true });
 
   if (post) {
-    await notificationService.createNotification(
-      post.author.toString(),
-      userObjectId.toString(),
-      "like",
-      post._id.toString()
-    );
+    await notificationService.createNotification(post.author.toString(), userId, "like", post._id.toString());
   }
 
-  return {
-    liked: true,
-    likesCount: post?.likesCount ?? 0,
-  };
+  return { liked: true, likesCount: post?.likesCount ?? 0 };
 };
 
-export const getLikes = async (postId: string) => {
+export const getLikes = async (postId: string, currentUserId?: string) => {
   const postObjectId = new Types.ObjectId(postId);
-  return Like.find({ post: postObjectId }).populate(
-    "user",
-    "username avatar"
-  );
+  const likes = await Like.find({ post: postObjectId }).populate("user", "username avatar");
+
+  if (!currentUserId) return likes.map(l => ({ ...l.toJSON(), userLiked: false }));
+
+  const userLiked = likes.some(l => l.user._id.toString() === currentUserId);
+  return likes.map(l => ({ ...l.toJSON(), userLiked }));
 };

@@ -14,7 +14,17 @@ const commentSchema = new Schema<CommentDocument>(
     post: { type: Schema.Types.ObjectId, ref: "Post", required: true },
     content: { type: String, required: true, maxlength: 1000 },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      versionKey: false,
+      transform: (_doc, ret: Record<string, unknown>) => {
+        if (ret._id) ret.id = ret._id.toString();
+        delete ret._id;
+      },
+    },
+  }
 );
 
 export default model<CommentDocument>("Comment", commentSchema);

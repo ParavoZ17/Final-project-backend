@@ -1,4 +1,4 @@
-import { Server as SocketIOServer } from "socket.io";
+import { Server as SocketIOServer, Socket } from "socket.io";
 import http from "http";
 
 let io: SocketIOServer;
@@ -12,11 +12,16 @@ export const initSocket = (server: http.Server) => {
     },
   });
 
-  io.on("connection", socket => {
-    console.log("Новий підключений користувач:", socket.id);
+  io.on("connection", (socket: Socket & { userId?: string }) => {
+    console.log("New user connected:", socket.id);
+
+    socket.on("register", (userId: string) => {
+      socket.userId = userId;
+      socket.join(userId); 
+    });
 
     socket.on("disconnect", () => {
-      console.log("Користувач відключився:", socket.id);
+      console.log("User disconnected:", socket.id);
     });
   });
 
@@ -24,6 +29,6 @@ export const initSocket = (server: http.Server) => {
 };
 
 export const getIO = (): SocketIOServer => {
-  if (!io) throw new Error("Socket.IO не ініціалізований!");
+  if (!io) throw new Error("Socket.IO is not initialized!");
   return io;
 };

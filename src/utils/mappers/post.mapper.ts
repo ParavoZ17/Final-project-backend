@@ -1,10 +1,15 @@
-import { Types } from "mongoose";
+
+import { PostWithAuthor } from "../../types/post.types.js";
 
 export interface MapPostOptions {
   userLiked?: boolean;
+  isAuthorFollowed?: boolean;
 }
 
-export const mapPost = (post: any, options?: MapPostOptions) => {
+export const mapPost = (
+  post: PostWithAuthor,
+  options?: MapPostOptions
+) => {
   return {
     id: post._id.toString(),
     content: post.content,
@@ -15,13 +20,11 @@ export const mapPost = (post: any, options?: MapPostOptions) => {
 
     author: post.author
       ? {
-          id:
-            post.author._id instanceof Types.ObjectId
-              ? post.author._id.toString()
-              : post.author._id,
+          id: post.author._id.toString(),
           username: post.author.username,
-          avatar: post.author.avatar,
           fullname: post.author.fullname,
+          avatar: post.author.avatar ?? "",
+          isFollowedByCurrentUser: options?.isAuthorFollowed ?? false,
         }
       : null,
 

@@ -3,8 +3,8 @@ import User from "../db/models/User.js";
 import Like from "../db/models/Like.js";
 import { Types } from "mongoose";
 import { mapPost } from "../utils/mappers/post.mapper.js";
+import Follow from "../db/models/Follow.js";
 
-// Отримати пости (для стрічки, окрім власних)
 export const getPosts = async (
   userId: string,
   limit = 20,
@@ -16,25 +16,41 @@ export const getPosts = async (
     .sort({ createdAt: -1 })
     .limit(limit)
     .skip(skip)
-    .populate("author", "username avatar fullname");
+    .populate("author", "username fullname avatar");
 
   const postIds = posts.map(p => p._id);
+  const authorIds = posts.map(p => p.author._id.toString());
 
+  // лайки
   const likes = await Like.find({
     user: userId,
     post: { $in: postIds },
   });
 
-  const likedIds = likes.map(l => l.post?.toString());
+  const likedPostIds = new Set(
+    likes.map(l => l.post?.toString())
+  );
+
+  // фолови
+  const follows = await Follow.find({
+    follower: userId,
+    following: { $in: authorIds },
+  });
+
+  const followedAuthorIds = new Set(
+    follows.map(f => f.following.toString())
+  );
 
   return posts.map(post =>
     mapPost(post, {
-      userLiked: likedIds.includes(post._id.toString()),
+      userLiked: likedPostIds.has(post._id.toString()),
+      isAuthorFollowed: followedAuthorIds.has(
+        post.author._id.toString()
+      ),
     })
   );
 };
 
-// Створення посту + оновлення користувача
 export const createPost = async (userId: string, content: string, images: string[]) => {
   const post = await Post.create({
     author: userId,
@@ -42,7 +58,7 @@ export const createPost = async (userId: string, content: string, images: string
     images,
   });
 
-  // оновлюємо користувача
+ 
   await User.findByIdAndUpdate(userId, {
     $push: { posts: post._id },
     $inc: { postsCount: 1 },
@@ -57,23 +73,27 @@ export const getPostById = async (
 ) => {
   const post = await Post.findById(postId).populate(
     "author",
-    "username avatar fullname"
+    "username fullname avatar"
   );
 
   if (!post) return null;
 
-  const liked = await Like.exists({
-    user: currentUserId,
-    post: post._id,
-  });
+  const [liked, followed] = await Promise.all([
+    Like.exists({ user: currentUserId, post: post._id }),
+    Follow.exists({
+      follower: currentUserId,
+      following: post.author._id,
+    }),
+  ]);
 
   return mapPost(post, {
     userLiked: !!liked,
+    isAuthorFollowed: !!followed,
   });
 };
 
 
-// Оновлення посту
+
 export const updatePost = async (postId: string, content?: string, newImages?: string[]) => {
   const post = await Post.findByIdAndUpdate(
     postId,
@@ -83,12 +103,12 @@ export const updatePost = async (postId: string, content?: string, newImages?: s
   return post?.toJSON() || null;
 };
 
-// Видалення посту + оновлення користувача
+
 export const deletePost = async (postId: string) => {
   const post = await Post.findByIdAndDelete(postId);
   if (!post) return false;
 
-  // Оновлюємо користувача
+
   await User.findByIdAndUpdate(post.author, {
     $pull: { posts: post._id },
     $inc: { postsCount: -1 },

@@ -4,6 +4,7 @@ import Post from "../db/models/Post.js";
 import HttpError from "../utils/HttpError.js";
 import { UpdateUserPayload, PublicUser } from "../types/user.interfaces.js";
 import { mapPost } from "../utils/mappers/post.mapper.js";
+import Follow from "../db/models/Follow.js";
 
 
 export const getUserById = async (userId: string): Promise<PublicUser> => {
@@ -60,7 +61,10 @@ export const updateAvatar = async (
   return user?.avatar || null;
 };
 
- const getUserWithPosts = async (userQuery: object) => {
+ const getUserWithPosts = async (
+  userQuery: object,
+  currentUserId?: string
+) => {
   const user = await User.findOne(userQuery).select(
     "-password -accessToken -refreshToken -email"
   );
@@ -69,7 +73,17 @@ export const updateAvatar = async (
 
   const posts = await Post.find({ author: user._id })
     .sort({ createdAt: -1 })
-    .populate("author", "username avatar fullname");
+    .populate("author", "username fullname avatar");
+
+  let isFollowed = false;
+
+  if (currentUserId) {
+    const follow = await Follow.exists({
+      follower: currentUserId,
+      following: user._id,
+    });
+    isFollowed = !!follow;
+  }
 
   return {
     id: user._id.toString(),
@@ -82,7 +96,9 @@ export const updateAvatar = async (
     followersCount: user.followersCount ?? 0,
     followingCount: user.followingCount ?? 0,
 
-    posts: posts.map(post => mapPost(post)),
+    posts: posts.map(post =>
+      mapPost(post, { isAuthorFollowed: isFollowed })
+    ),
   };
 };
 

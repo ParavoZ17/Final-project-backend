@@ -6,6 +6,7 @@ import {
   createPostController,
   getPostsController,
   getPostByIdController,
+  getCurrentUserPostsController,
   updatePostController,
   deletePostController,
 } from "../controllers/posts.controller.js";
@@ -15,10 +16,8 @@ import type { AuthRequest, PostParams } from "../types/interfaces.js";
 
 const postsRouter = Router();
 
-// GET /posts
 postsRouter.get("/", authenticate, asyncHandler(getPostsController));
 
-// POST /posts
 postsRouter.post(
   "/",
   authenticate,
@@ -26,7 +25,15 @@ postsRouter.post(
   asyncHandler(createPostController)
 );
 
-// GET /posts/:id
+postsRouter.get(
+  "/currentUser",
+  authenticate,
+  asyncHandler(
+    (req: AuthRequest & Request<PostParams>, res: Response) =>
+      getCurrentUserPostsController(req, res)
+  )
+);
+
 postsRouter.get(
   "/:id",
   authenticate,
@@ -36,7 +43,6 @@ postsRouter.get(
   )
 );
 
-// PATCH /posts/:id
 postsRouter.patch(
   "/:id",
   authenticate,
@@ -47,7 +53,6 @@ postsRouter.patch(
   )
 );
 
-// DELETE /posts/:id
 postsRouter.delete(
   "/:id",
   authenticate,
@@ -57,7 +62,6 @@ postsRouter.delete(
   )
 );
 
-// підмаршрути лайків і коментарів
 postsRouter.use("/:id/like", likeRouter);
 postsRouter.use("/:id/comment", commentsRouter);
 

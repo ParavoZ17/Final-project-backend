@@ -41,6 +41,16 @@ export const getPostByIdController = async (req: AuthRequest & Request<Params>, 
   }
 };
 
+export const getCurrentUserPostsController = async (req: AuthRequest & Request<Params>, res: Response) => {
+  try {
+    const userId = req.user!._id.toString();
+    const post = await postService.getPosts(userId, 20, 0);
+    res.json(post);
+  } catch (err: unknown) {
+    res.status(500).json({ message: "Server error", error: (err as Error).message });
+  }
+};
+
 export const updatePostController = async (req: AuthRequest & Request<Params>, res: Response) => {
   try {
     const { content } = req.body;
@@ -64,4 +74,3 @@ export const deletePostController = async (req: AuthRequest & Request<Params>, r
     res.status(500).json({ message: "Server error", error: (err as Error).message });
   }
 };
-

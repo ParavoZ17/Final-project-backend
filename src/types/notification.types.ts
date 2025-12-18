@@ -10,6 +10,7 @@ export type PopulatedUser = {
 export type PopulatedPost = {
   _id: Types.ObjectId;
   content: string;
+  images?: string[];
 };
 
 export type SenderField = Types.ObjectId | PopulatedUser;

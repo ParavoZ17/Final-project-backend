@@ -87,7 +87,7 @@ class NotificationService {
         .limit(limit)
         .skip(skip)
         .populate("sender", "username fullname avatar")
-        .populate("post", "content");
+        .populate("post", "content images");
 
       return notifications.map((n) => {
         const senderField = n.sender as SenderField;

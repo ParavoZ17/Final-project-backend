@@ -1,9 +1,17 @@
 import { Types } from "mongoose";
-import Notification, { NotificationDocument, NotificationType } from "../db/models/Notification.js";
+import Notification, {
+  NotificationDocument,
+  NotificationType,
+} from "../db/models/Notification.js";
+import {
+  PopulatedUser,
+  PopulatedPost,
+  SenderField,
+  PostField,
+  isPopulatedUser,
+  isPopulatedPost,
+} from "../types/notification.types.js";
 import { getIO } from "../utils/socket.js";
-
-type PopulatedUser = { _id: Types.ObjectId; username: string; fullname: string; avatar: string };
-type PopulatedPost = { _id: Types.ObjectId; content: string };
 
 export type NotificationWithTimeAgo = {
   id: string;
@@ -37,18 +45,20 @@ class NotificationService {
         sender: new Types.ObjectId(senderId),
         type,
       };
-      if (postId) data.post = new Types.ObjectId(postId);
+
+      if (postId) {
+        data.post = new Types.ObjectId(postId);
+      }
 
       const notification = await Notification.create(data);
 
-      // emit via Socket.IO
+      // Socket.IO emit
       const io = getIO();
       io.to(recipientId).emit("new_notification", {
         id: notification._id.toString(),
         recipient: recipientId,
         sender: {
           _id: senderId,
-          // Можна додати додаткові дані, якщо потрібно
         },
         type,
         post: postId ? { _id: postId } : undefined,
@@ -70,7 +80,9 @@ class NotificationService {
     skip = 0
   ): Promise<NotificationWithTimeAgo[]> {
     try {
-      const notifications = await Notification.find({ recipient: recipientId })
+      const notifications = await Notification.find({
+        recipient: recipientId,
+      })
         .sort({ createdAt: -1 })
         .limit(limit)
         .skip(skip)
@@ -78,15 +90,29 @@ class NotificationService {
         .populate("post", "content");
 
       return notifications.map((n) => {
-        const sender = n.sender as PopulatedUser | null;
-        const post = n.post as PopulatedPost | undefined;
+        const senderField = n.sender as SenderField;
+        const postField = n.post as PostField | undefined;
+
+        const sender: PopulatedUser = isPopulatedUser(senderField)
+          ? senderField
+          : {
+              _id: senderField,
+              username: "deleted",
+              fullname: "",
+              avatar: "",
+            };
+
+        const post: PopulatedPost | undefined =
+          postField && isPopulatedPost(postField)
+            ? postField
+            : undefined;
 
         return {
           id: n._id.toString(),
           recipient: n.recipient.toString(),
-          sender: sender || { _id: new Types.ObjectId(), username: "deleted", fullname: "", avatar: "" },
+          sender,
           type: n.type,
-          post: post || undefined,
+          post,
           read: n.read,
           createdAt: n.createdAt,
           updatedAt: n.updatedAt,
@@ -99,16 +125,19 @@ class NotificationService {
     }
   }
 
-  async markAsRead(notificationId: string): Promise<NotificationDocument | null> {
-    if (!notificationId) throw new Error("Notification ID required");
+  async markAsRead(
+    notificationId: string
+  ): Promise<NotificationDocument | null> {
+    if (!notificationId) {
+      throw new Error("Notification ID required");
+    }
 
     try {
-      const updated = await Notification.findByIdAndUpdate(
+      return await Notification.findByIdAndUpdate(
         notificationId,
         { read: true },
         { new: true }
       );
-      return updated;
     } catch (error) {
       console.error("Error marking notification as read:", error);
       return null;
@@ -117,13 +146,16 @@ class NotificationService {
 
   private formatTimeAgo(date: Date): string {
     const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    const seconds = Math.floor(
+      (now.getTime() - date.getTime()) / 1000
+    );
 
     if (seconds < 60) return "just now";
     if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)} h ago`;
     if (seconds < 2592000) return `${Math.floor(seconds / 86400)} d ago`;
-    if (seconds < 31104000) return `${Math.floor(seconds / 2592000)} mo ago`;
+    if (seconds < 31104000)
+      return `${Math.floor(seconds / 2592000)} mo ago`;
     return `${Math.floor(seconds / 31104000)} y ago`;
   }
 }

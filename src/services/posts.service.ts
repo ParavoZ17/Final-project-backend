@@ -85,25 +85,37 @@ export const getPostById = async (
   });
 };
 
-export const updatePost = async (postId: string, content?: string, newImages?: string[]) => {
+export const updatePost = async (
+  postId: string,
+  content?: string,
+  newImages?: string[]
+): Promise<PostForFrontend | null> => {
   const post = await Post.findByIdAndUpdate(
     postId,
-    { $set: { content }, $push: { images: { $each: newImages || [] } } },
+    {
+      ...(content !== undefined && { content }),
+      ...(newImages?.length && { $push: { images: { $each: newImages } } }),
+    },
     { new: true }
-  );
-  return post?.toJSON() || null;
+  ).populate("author", "username fullname avatar");
+
+  if (!post) return null;
+
+  return mapPostForFrontend(post as unknown as PostWithAuthor, {
+    userLiked: false, 
+    isAuthorFollowed: false,
+  });
 };
 
 
 export const deletePost = async (postId: string) => {
   const post = await Post.findByIdAndDelete(postId);
-  if (!post) return false;
-
+  if (!post) return null;
 
   await User.findByIdAndUpdate(post.author, {
     $pull: { posts: post._id },
     $inc: { postsCount: -1 },
   });
 
-  return true;
+  return post;
 };

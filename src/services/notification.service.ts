@@ -11,7 +11,6 @@ import {
   isPopulatedUser,
   isPopulatedPost,
 } from "../types/notification.types.js";
-import { getIO } from "../utils/socket.js";
 
 export type NotificationWithTimeAgo = {
   id: string;
@@ -30,7 +29,7 @@ class NotificationService {
     recipientId: string,
     senderId: string,
     type: NotificationType,
-    postId?: string
+    postId?: string,
   ): Promise<NotificationDocument | null> {
     if (recipientId.toString() === senderId.toString()) return null;
 
@@ -52,20 +51,7 @@ class NotificationService {
 
       const notification = await Notification.create(data);
 
-      // Socket.IO emit
-      const io = getIO();
-      io.to(recipientId).emit("new_notification", {
-        id: notification._id.toString(),
-        recipient: recipientId,
-        sender: {
-          _id: senderId,
-        },
-        type,
-        post: postId ? { _id: postId } : undefined,
-        read: false,
-        createdAt: notification.createdAt,
-        updatedAt: notification.updatedAt,
-      });
+      // ⚠️ Видалено Socket-emit для нової нотифікації
 
       return notification;
     } catch (error) {

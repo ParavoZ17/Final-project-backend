@@ -10,6 +10,8 @@ import authRouter from "./routers/auth.router.js";
 import userRouter from "./routers/users.router.js";
 import postsRouter from "./routers/posts.router.js";
 import notificationRouter from "./routers/notification.routes.js"
+import messageRoutes from "./routers/message.routes.js"
+import chatRouter from "./routers/chat.routes.js"; 
 
 const startServer = (): void => {
   const app: Application = express();
@@ -23,6 +25,10 @@ const startServer = (): void => {
   app.use("/api/user", userRouter);
   app.use("/api/posts", postsRouter);
   app.use("/api/notifications", notificationRouter);
+
+  app.use("/api/messages", messageRoutes);
+  app.use("/api/chats", chatRouter);
+  
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -1,23 +1,8 @@
-import { UserDocument } from "../db/models/User.ts";
-import { Types } from "mongoose";
+import { UserDocument } from "../db/models/User.js";
 
-declare module "express-serve-static-core"{
-    interface Request {
-        user?: UserDocument;
-    }
-        
-    
-}
-
-declare global {
-  namespace Express {
-    interface User {
-      _id: Types.ObjectId;
-    }
-
-    interface Request {
-      user?: User;
-    }
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: UserDocument;
   }
 }
 
